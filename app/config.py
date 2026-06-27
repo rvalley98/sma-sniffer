@@ -1,7 +1,13 @@
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+# Load a local .env for development. In the container the variables are provided
+# by Docker Compose (env_file), so python-dotenv is optional there.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ModuleNotFoundError:
+    pass
 
 
 def _require(name: str) -> str:

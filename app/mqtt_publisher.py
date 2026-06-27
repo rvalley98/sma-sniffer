@@ -11,7 +11,7 @@ class MqttPublisher:
         self.ha_prefix = ha_prefix
         self.device_id = device_id
 
-        self.client = mqtt.Client()
+        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
         self.client.username_pw_set(user, password)
         self.client.connect(host, port, 60)
         self.client.loop_start()
