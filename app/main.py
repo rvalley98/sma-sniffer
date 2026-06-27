@@ -57,6 +57,7 @@ def main():
     print("Listening SMA Speedwire...")
 
     seen_unmapped = set()
+    dumped_serials = set()
 
     while True:
         data, _ = sock.recvfrom(4096)
@@ -64,6 +65,15 @@ def main():
         telegram = speedwire.parse(data)
         if telegram is None:
             continue
+
+        if config.DEBUG_OBIS and telegram.serial not in dumped_serials:
+            dumped_serials.add(telegram.serial)
+            print(
+                f"[OBIS] susy={telegram.susy_id} serial={telegram.serial} "
+                f"channels:"
+            )
+            for line in telegram.describe():
+                print(line)
 
         device = next((d for d in devices if d.matches(telegram)), None)
 

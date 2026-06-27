@@ -47,3 +47,6 @@ DEVICE_ID = "sma_sniffer"
 METER_SERIAL = _optional_int("METER_SERIAL")
 PV_SERIAL = _optional_int("PV_SERIAL")
 BATTERY_SERIAL = _optional_int("BATTERY_SERIAL")
+
+# Debug: dump all decoded OBIS channels once per device serial.
+DEBUG_OBIS = os.getenv("DEBUG_OBIS", "").lower() in ("1", "true", "yes", "on")

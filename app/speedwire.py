@@ -10,6 +10,31 @@ OBIS_P_MINUS = 0x00020400  # active power fed into grid (export)
 OBIS_END = 0x00000000
 POWER_DIVISOR = 10.0
 
+# Human-readable labels for known OBIS channels (used by the debug dump).
+# Key: identifier -> (name, unit, scale); human value = raw * scale.
+OBIS_LABELS = {
+    0x00010400: ("P+ active power import", "W", 0.1),
+    0x00020400: ("P- active power export", "W", 0.1),
+    0x00030400: ("Q+ reactive power import", "var", 0.1),
+    0x00040400: ("Q- reactive power export", "var", 0.1),
+    0x00090400: ("S+ apparent power import", "VA", 0.1),
+    0x000A0400: ("S- apparent power export", "VA", 0.1),
+    0x000D0400: ("power factor", "", 0.001),
+    0x000E0400: ("frequency", "Hz", 0.001),
+    0x00150400: ("L1 P+ import", "W", 0.1),
+    0x00160400: ("L1 P- export", "W", 0.1),
+    0x001F0400: ("L1 current", "A", 0.001),
+    0x00200400: ("L1 voltage", "V", 0.001),
+    0x00290400: ("L2 P+ import", "W", 0.1),
+    0x002A0400: ("L2 P- export", "W", 0.1),
+    0x00330400: ("L2 current", "A", 0.001),
+    0x00340400: ("L2 voltage", "V", 0.001),
+    0x003D0400: ("L3 P+ import", "W", 0.1),
+    0x003E0400: ("L3 P- export", "W", 0.1),
+    0x00470400: ("L3 current", "A", 0.001),
+    0x00480400: ("L3 voltage", "V", 0.001),
+}
+
 
 class Telegram:
     """A decoded SMA Speedwire energy-meter telegram."""
@@ -31,6 +56,20 @@ class Telegram:
         if p_plus is None and p_minus is None:
             return None
         return round(((p_plus or 0) - (p_minus or 0)) / POWER_DIVISOR, 1)
+
+    def describe(self):
+        """Human-readable lines for every decoded OBIS channel (for debugging)."""
+        lines = []
+        for code in sorted(self.obis):
+            raw = self.obis[code]
+            label, unit, scale = OBIS_LABELS.get(code, (None, "", None))
+            if label is None:
+                lines.append(f"  {code:#010x} = {raw} (raw, unknown)")
+            else:
+                lines.append(
+                    f"  {code:#010x} {label}: {raw * scale:g} {unit}".rstrip()
+                )
+        return lines
 
 
 def _obis_channel_len(identifier: int) -> int:
