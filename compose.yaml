@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  sma-decoder:
+    build: .
+    container_name: sma-decoder
+    network_mode: host
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app
+    working_dir: /app
