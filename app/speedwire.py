@@ -7,14 +7,21 @@ SMA_PROTOCOL_ENERGY_METER = 0x6069
 OBIS_P_PLUS = 0x00010400   # active power drawn from grid (consumption)
 OBIS_P_MINUS = 0x00020400  # active power fed into grid (export)
 
+# OBIS energy counters (8-byte cumulative values, raw value is in Ws).
+OBIS_E_PLUS = 0x00010800   # energy imported from grid (1.8.0)
+OBIS_E_MINUS = 0x00020800  # energy exported to grid (2.8.0)
+
 OBIS_END = 0x00000000
 POWER_DIVISOR = 10.0
+ENERGY_DIVISOR = 3_600_000.0  # Ws -> kWh
 
 # Human-readable labels for known OBIS channels (used by the debug dump).
 # Key: identifier -> (name, unit, scale); human value = raw * scale.
 OBIS_LABELS = {
     0x00010400: ("P+ active power import", "W", 0.1),
     0x00020400: ("P- active power export", "W", 0.1),
+    0x00010800: ("E+ energy import counter", "kWh", 1 / 3_600_000),
+    0x00020800: ("E- energy export counter", "kWh", 1 / 3_600_000),
     0x00030400: ("Q+ reactive power import", "var", 0.1),
     0x00040400: ("Q- reactive power export", "var", 0.1),
     0x00090400: ("S+ apparent power import", "VA", 0.1),
@@ -48,6 +55,11 @@ class Telegram:
         """Single OBIS channel value in watts (or None if not present)."""
         value = self.obis.get(obis_code)
         return None if value is None else value / POWER_DIVISOR
+
+    def energy_kwh(self, obis_code: int):
+        """Cumulative OBIS counter in kWh (or None if not present)."""
+        value = self.obis.get(obis_code)
+        return None if value is None else round(value / ENERGY_DIVISOR, 3)
 
     def net_active_power_w(self):
         """Net active power: positive = import/draw, negative = export/feed-in."""

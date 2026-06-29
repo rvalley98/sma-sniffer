@@ -111,7 +111,9 @@ Basis-Topic: `sma-sniffer/energy`
 
 | Topic                          | Beschreibung                              |
 | ------------------------------ | ----------------------------------------- |
-| `sma-sniffer/energy/grid/power_w`         | Netzleistung in W (+ Bezug / − Einspeisung)   |
+| `sma-sniffer/energy/grid/power_w`          | Netzleistung in W (+ Bezug / − Einspeisung)   |
+| `sma-sniffer/energy/grid/energy_import_kwh` | Netzbezug-Zähler in kWh (für Energie-Dashboard) |
+| `sma-sniffer/energy/grid/energy_export_kwh` | Einspeisung-Zähler in kWh                      |
 | `sma-sniffer/energy/pv/power_w`           | PV-Leistung in W (sofern `PV_IP` gesetzt)     |
 | `sma-sniffer/energy/pv/energy_total_kwh`  | PV-Gesamtertrag in kWh (für Energie-Dashboard) |
 | `sma-sniffer/energy/pv/energy_today_kwh`  | PV-Tagesertrag in kWh                          |
