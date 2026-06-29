@@ -301,25 +301,98 @@ class Data2Client:
         """Battery state of charge in percent (Sunny Island), or None."""
         return self._read_value(_REG_BATTERY_SOC, signed=False)
 
+    def query_raw(self, command, first, last):
+        """Send one register query and return the raw reply bytes."""
+        packet, pktid = self._query_packet(command, first, last)
+        return self._exchange(packet, pktid)
+
+    def read_counter_wh(self, register):
+        """Read a 64-bit Wh counter (energy queries, 16-byte records)."""
+        command, first, last = register
+        data = self.query_raw(command, first, last)
+        if len(data) < _VALUE_OFFSET + 8:
+            return None
+        raw = struct.unpack_from("<Q", data, _VALUE_OFFSET)[0]
+        if raw in (0xFFFFFFFFFFFFFFFF, _NAN_SIGNED):
+            return None
+        return raw
+
+
+def dump_records(data):
+    """Yield (lri, class, timestamp, value32, value64) for each reply record.
+
+    Records start at offset 54. Instantaneous values use a 28-byte stride and a
+    32-bit value at +8; 64-bit counters (energy) use a 16-byte stride. We can't
+    know the stride up front, so this yields both interpretations' values per
+    16-byte step and lets the caller eyeball which register is which.
+    """
+    end = len(data) - 4  # drop the trailing 00000000
+    pos = 54
+    while pos + 12 <= end:
+        code = struct.unpack_from("<I", data, pos)[0]
+        lri = code & 0x00FFFF00
+        cls = code & 0xFF
+        timestamp = struct.unpack_from("<I", data, pos + 4)[0]
+        value32 = struct.unpack_from("<i", data, pos + 8)[0]
+        value64 = (
+            struct.unpack_from("<q", data, pos + 8)[0]
+            if pos + 16 <= len(data) else None
+        )
+        yield lri, cls, timestamp, value32, value64
+        # Energy counters pack 64-bit values (16-byte records); spot values are
+        # 28-byte. Step by the smaller stride so we never skip a record.
+        pos += 16 if lri in (0x00260100, 0x00496700, 0x00492600) else 28
+
+
+# Named register ranges for the CLI dump mode.
+_DUMP_PRESETS = {
+    "energy": (0x54000200, 0x00260100, 0x002622FF),   # metering Wh totals
+    "batload": (0x54000200, 0x00496700, 0x004967FF),  # battery charge today/total
+    "batdiag": (0x51000200, 0x00491E00, 0x00495DFF),  # battery V/A/temp/throughput
+}
+
 
 def _cli():
-    """Quick test: python speedwire_data2.py <ip> [password] [user|installer]."""
+    """Quick test / register dump for an SMA inverter.
+
+    python speedwire_data2.py <ip> [password] [user|installer]
+    python speedwire_data2.py <ip> <password> <group> dump <energy|batload|batdiag>
+    python speedwire_data2.py <ip> <password> <group> dump <cmdhex> <firsthex> <lasthex>
+    """
     import sys
 
     if len(sys.argv) < 2:
-        print(__doc__)
-        print("usage: python speedwire_data2.py <ip> [password] [user|installer]")
+        print(_cli.__doc__)
         return 1
 
     ip = sys.argv[1]
     password = sys.argv[2] if len(sys.argv) > 2 else "0000"
     group = sys.argv[3] if len(sys.argv) > 3 else "user"
 
+    dump = None
+    if len(sys.argv) > 4 and sys.argv[4] == "dump":
+        if len(sys.argv) == 6 and sys.argv[5] in _DUMP_PRESETS:
+            dump = _DUMP_PRESETS[sys.argv[5]]
+        elif len(sys.argv) == 8:
+            dump = tuple(int(x, 16) for x in sys.argv[5:8])
+        else:
+            print("dump needs a preset (energy|batload|batdiag) or cmd/first/last hex")
+            return 1
+
     try:
         with Data2Client(ip, password, group, debug=True) as inv:
             print(f"Connected: SusyID={inv.susy_id} serial={inv.serial}")
-            print(f"AC power : {inv.ac_power_w()} W")
-            print(f"Battery SoC: {inv.battery_soc_pct()} %")
+            if dump is None:
+                print(f"AC power : {inv.ac_power_w()} W")
+                print(f"Battery SoC: {inv.battery_soc_pct()} %")
+            else:
+                data = inv.query_raw(*dump)
+                print(f"--- records for {[hex(x) for x in dump]} ---")
+                for lri, cls, ts, v32, v64 in dump_records(data):
+                    print(
+                        f"  lri=0x{lri:08x} cls={cls:#04x} "
+                        f"val32={v32} val64={v64}"
+                    )
     except Data2Error as exc:
         print(f"ERROR: {exc}")
         return 1
