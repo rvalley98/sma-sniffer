@@ -1,13 +1,23 @@
-def power_sensor(unique_id, name, topic_suffix):
-    """Build a Home Assistant power sensor definition."""
+def sensor(unique_id, name, topic_suffix, unit, device_class):
+    """Build a generic Home Assistant measurement sensor definition."""
     return {
         "unique_id": unique_id,
         "name": name,
         "state_topic_suffix": topic_suffix,
-        "unit_of_measurement": "W",
-        "device_class": "power",
+        "unit_of_measurement": unit,
+        "device_class": device_class,
         "state_class": "measurement",
     }
+
+
+def power_sensor(unique_id, name, topic_suffix):
+    """Build a Home Assistant power sensor definition (W)."""
+    return sensor(unique_id, name, topic_suffix, "W", "power")
+
+
+def battery_sensor(unique_id, name, topic_suffix):
+    """Build a Home Assistant battery state-of-charge sensor definition (%)."""
+    return sensor(unique_id, name, topic_suffix, "%", "battery")
 
 
 class SmaDevice:
@@ -25,6 +35,32 @@ class SmaDevice:
 
     def handle(self, telegram):
         """Return a list of (topic_suffix, value) tuples to publish."""
+        raise NotImplementedError
+
+    def ha_sensors(self):
+        """Return a list of Home Assistant sensor definitions."""
+        return []
+
+
+class PolledInverter:
+    """Base class for an SMA inverter that is actively polled by IP.
+
+    Inverters (Sunny Tripower, Sunny Island) do not broadcast their power, so
+    they are queried over the Speedwire Data2+ protocol instead of matched
+    against multicast telegrams.
+    """
+
+    role = "inverter"
+    name = "SMA Inverter"
+
+    def __init__(self, ip, serial=None, password="0000", user_group="user"):
+        self.ip = ip
+        self.serial = serial
+        self.password = password
+        self.user_group = user_group
+
+    def read(self, client):
+        """Query the given Data2Client; return (topic_suffix, value) tuples."""
         raise NotImplementedError
 
     def ha_sensors(self):

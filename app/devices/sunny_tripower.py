@@ -1,19 +1,16 @@
-from devices.base import SmaDevice, power_sensor
+from devices.base import PolledInverter, power_sensor
 
 
-class SunnyTripower(SmaDevice):
-    """SMA Sunny Tripower PV inverter.
-
-    Matched by serial number only (set PV_SERIAL in the .env).
-    """
+class SunnyTripower(PolledInverter):
+    """SMA Sunny Tripower PV inverter, polled via Speedwire Data2+ (PV_IP)."""
 
     role = "pv"
     name = "PV Power"
 
-    def handle(self, telegram):
-        # PV generation. If the value comes out with the wrong sign once real
-        # telegrams are seen, flip it here.
-        return [("pv/power_w", telegram.net_active_power_w())]
+    def read(self, client):
+        # Total AC power of the PV inverter. If the sign is wrong for your
+        # setup once real values are seen, negate it here.
+        return [("pv/power_w", client.ac_power_w())]
 
     def ha_sensors(self):
         return [power_sensor("sma_pv_w", "PV Power", "pv/power_w")]

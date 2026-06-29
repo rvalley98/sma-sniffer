@@ -1,30 +1,75 @@
 import socket
 import struct
+import threading
 import time
 
 import config
 import speedwire
 from mqtt_publisher import MqttPublisher
+from speedwire_data2 import Data2Client, Data2Error
 from devices.energy_meter import EnergyMeter
 from devices.sunny_tripower import SunnyTripower
 from devices.sunny_island import SunnyIsland
 
 
 def build_devices():
-    """Build the list of active devices based on the configuration.
+    """Devices read passively from the Speedwire multicast stream.
 
-    The grid meter is always active (auto-detected by SUSY id). The PV and
-    battery devices are only added once their serial is set in the .env.
+    Only the grid meter broadcasts its power (auto-detected by SUSY id, or
+    pinned via METER_SERIAL). The inverters are polled separately, see
+    build_inverters().
     """
-    devices = [EnergyMeter(config.METER_SERIAL)]
+    return [EnergyMeter(config.METER_SERIAL)]
 
-    if config.PV_SERIAL is not None:
-        devices.append(SunnyTripower(config.PV_SERIAL))
 
-    if config.BATTERY_SERIAL is not None:
-        devices.append(SunnyIsland(config.BATTERY_SERIAL))
+def build_inverters():
+    """Inverters that are actively polled by IP via Speedwire Data2+.
 
-    return devices
+    Each is only added once its Speedwire IP is set in the .env.
+    """
+    inverters = []
+
+    if config.PV_IP is not None:
+        inverters.append(SunnyTripower(
+            config.PV_IP, config.PV_SERIAL,
+            config.INVERTER_PASSWORD, config.INVERTER_USER_GROUP,
+        ))
+
+    if config.BATTERY_IP is not None:
+        inverters.append(SunnyIsland(
+            config.BATTERY_IP, config.BATTERY_SERIAL,
+            config.INVERTER_PASSWORD, config.INVERTER_USER_GROUP,
+        ))
+
+    return inverters
+
+
+def poll_inverters(inverters, mqtt):
+    """Background loop: query each inverter every POLL_INTERVAL seconds."""
+    while True:
+        for inv in inverters:
+            try:
+                with Data2Client(
+                    inv.ip, inv.password, inv.user_group,
+                    debug=config.DEBUG_OBIS,
+                ) as client:
+                    results = inv.read(client)
+                    discovered = client.serial
+            except (Data2Error, OSError) as exc:
+                print(f"[{inv.role.upper()}] poll failed ({inv.ip}): {exc}")
+                continue
+
+            if inv.serial is not None and discovered != inv.serial:
+                print(
+                    f"[{inv.role.upper()}] warning: {inv.ip} reports serial "
+                    f"{discovered}, expected {inv.serial} (wrong IP?)"
+                )
+
+            for topic_suffix, value in results:
+                mqtt.publish(topic_suffix, value)
+                print(f"[{inv.role.upper()}] {inv.ip} {topic_suffix} = {value}")
+
+        time.sleep(config.POLL_INTERVAL)
 
 
 def open_socket():
@@ -43,6 +88,7 @@ def open_socket():
 
 def main():
     devices = build_devices()
+    inverters = build_inverters()
 
     mqtt = MqttPublisher(
         config.MQTT_HOST, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASS,
@@ -51,7 +97,14 @@ def main():
 
     if config.HA_DISCOVERY:
         time.sleep(2)
-        mqtt.publish_ha_discovery(devices)
+        mqtt.publish_ha_discovery(devices + inverters)
+
+    if inverters:
+        names = ", ".join(f"{inv.role}@{inv.ip}" for inv in inverters)
+        print(f"Polling inverters every {config.POLL_INTERVAL}s: {names}")
+        threading.Thread(
+            target=poll_inverters, args=(inverters, mqtt), daemon=True
+        ).start()
 
     sock = open_socket()
     print("Listening SMA Speedwire...")

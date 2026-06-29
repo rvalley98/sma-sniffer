@@ -48,5 +48,13 @@ METER_SERIAL = _optional_int("METER_SERIAL")
 PV_SERIAL = _optional_int("PV_SERIAL")
 BATTERY_SERIAL = _optional_int("BATTERY_SERIAL")
 
+# Active polling of the inverters via SMA Speedwire Data2+ (query by IP).
+# The inverters do not broadcast their power, so they are queried directly.
+PV_IP = os.getenv("PV_IP") or None
+BATTERY_IP = os.getenv("BATTERY_IP") or None
+INVERTER_PASSWORD = os.getenv("INVERTER_PASSWORD", "0000")
+INVERTER_USER_GROUP = os.getenv("INVERTER_USER_GROUP", "user").strip().lower()
+POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "10"))
+
 # Debug: dump all decoded OBIS channels once per device serial.
 DEBUG_OBIS = os.getenv("DEBUG_OBIS", "").lower() in ("1", "true", "yes", "on")
