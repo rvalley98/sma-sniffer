@@ -78,9 +78,29 @@ _CMD_DISCOVER = (0x00000200, 0x00000000, 0x00000000)
 _REG_AC_POWER = (0x51000200, 0x00263F00, 0x00263FFF)   # total AC power (Pac), W
 _REG_BATTERY_SOC = (0x51000200, 0x00295A00, 0x00295AFF)  # battery charge, %
 
+# Energy counters (64-bit Wh totals, 16-byte records). One query returns both
+# the lifetime and the daily yield; we pick them out by LRI.
+_REG_ENERGY = (0x54000200, 0x00260100, 0x002622FF)
+_LRI_TOTAL_YIELD = 0x00260100   # MeteringTotWhOut, lifetime AC yield (Wh)
+_LRI_DAILY_YIELD = 0x00262200   # MeteringDyWhOut, today's AC yield (Wh)
+
+# Sunny Island battery throughput counters (Wh, lifetime). Charge >= discharge.
+_REG_BATTERY_ENERGY = (0x54000200, 0x00496700, 0x004968FF)
+_LRI_BAT_CHARGE = 0x00496700     # energy charged into the battery (Wh)
+_LRI_BAT_DISCHARGE = 0x00496800  # energy discharged from the battery (Wh)
+
+# LRIs whose records hold a 64-bit counter (16-byte stride) instead of a 32-bit
+# instantaneous value (28-byte stride).
+_COUNTER_LRIS = {
+    0x00260100, 0x00260200, 0x00262200, 0x00262300,
+    0x00496700, 0x00496800, 0x00492600, 0x00492700,
+}
+
 # Markers the inverter uses for "value not available".
 _NAN_UNSIGNED = 0xFFFFFFFF
 _NAN_SIGNED = 0x80000000
+_NAN_U64 = 0xFFFFFFFFFFFFFFFF
+_NAN_S64 = 0x8000000000000000
 
 # Spot values sit at offset 62, then every 28 bytes for multi-value responses.
 _VALUE_OFFSET = 62
@@ -306,16 +326,37 @@ class Data2Client:
         packet, pktid = self._query_packet(command, first, last)
         return self._exchange(packet, pktid)
 
-    def read_counter_wh(self, register):
-        """Read a 64-bit Wh counter (energy queries, 16-byte records)."""
-        command, first, last = register
+    def read_wh_counters(self, command, first, last):
+        """Query a range and return {lri: value_wh} for every 64-bit counter."""
         data = self.query_raw(command, first, last)
-        if len(data) < _VALUE_OFFSET + 8:
-            return None
-        raw = struct.unpack_from("<Q", data, _VALUE_OFFSET)[0]
-        if raw in (0xFFFFFFFFFFFFFFFF, _NAN_SIGNED):
-            return None
-        return raw
+        counters = {}
+        for lri, _cls, _ts, _v32, v64 in dump_records(data):
+            if v64 is None:
+                continue
+            if (v64 & 0xFFFFFFFFFFFFFFFF) in (_NAN_U64, _NAN_S64):
+                continue
+            counters[lri] = v64
+        return counters
+
+    def yield_counters_kwh(self):
+        """(total, today) AC yield in kWh for a generation inverter."""
+        c = self.read_wh_counters(*_REG_ENERGY)
+        total = c.get(_LRI_TOTAL_YIELD)
+        today = c.get(_LRI_DAILY_YIELD)
+        return (
+            None if total is None else round(total / 1000, 3),
+            None if today is None else round(today / 1000, 3),
+        )
+
+    def battery_energy_kwh(self):
+        """(charged, discharged) battery throughput in kWh (Sunny Island)."""
+        c = self.read_wh_counters(*_REG_BATTERY_ENERGY)
+        charged = c.get(_LRI_BAT_CHARGE)
+        discharged = c.get(_LRI_BAT_DISCHARGE)
+        return (
+            None if charged is None else round(charged / 1000, 3),
+            None if discharged is None else round(discharged / 1000, 3),
+        )
 
 
 def dump_records(data):
@@ -340,8 +381,8 @@ def dump_records(data):
         )
         yield lri, cls, timestamp, value32, value64
         # Energy counters pack 64-bit values (16-byte records); spot values are
-        # 28-byte. Step by the smaller stride so we never skip a record.
-        pos += 16 if lri in (0x00260100, 0x00496700, 0x00492600) else 28
+        # 28-byte. Step by the matching stride so we never skip/overrun a record.
+        pos += 16 if lri in _COUNTER_LRIS else 28
 
 
 # Named register ranges for the CLI dump mode.

@@ -1,12 +1,13 @@
-def sensor(unique_id, name, topic_suffix, unit, device_class):
-    """Build a generic Home Assistant measurement sensor definition."""
+def sensor(unique_id, name, topic_suffix, unit, device_class,
+           state_class="measurement"):
+    """Build a generic Home Assistant sensor definition."""
     return {
         "unique_id": unique_id,
         "name": name,
         "state_topic_suffix": topic_suffix,
         "unit_of_measurement": unit,
         "device_class": device_class,
-        "state_class": "measurement",
+        "state_class": state_class,
     }
 
 
@@ -18,6 +19,14 @@ def power_sensor(unique_id, name, topic_suffix):
 def battery_sensor(unique_id, name, topic_suffix):
     """Build a Home Assistant battery state-of-charge sensor definition (%)."""
     return sensor(unique_id, name, topic_suffix, "%", "battery")
+
+
+def energy_sensor(unique_id, name, topic_suffix):
+    """Build a cumulative energy sensor (kWh) for the HA Energy Dashboard."""
+    return sensor(
+        unique_id, name, topic_suffix, "kWh", "energy",
+        state_class="total_increasing",
+    )
 
 
 class SmaDevice:

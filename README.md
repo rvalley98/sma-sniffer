@@ -111,10 +111,18 @@ Basis-Topic: `sma-sniffer/energy`
 
 | Topic                          | Beschreibung                              |
 | ------------------------------ | ----------------------------------------- |
-| `sma-sniffer/energy/grid/power_w`     | Netzleistung in W (+ Bezug / − Einspeisung)   |
-| `sma-sniffer/energy/pv/power_w`       | PV-Leistung in W (sofern `PV_IP` gesetzt)     |
-| `sma-sniffer/energy/battery/power_w`  | Batterieleistung in W (sofern `BATTERY_IP`)   |
-| `sma-sniffer/energy/battery/soc_pct`  | Batterie-Ladezustand in % (Sunny Island)      |
+| `sma-sniffer/energy/grid/power_w`         | Netzleistung in W (+ Bezug / − Einspeisung)   |
+| `sma-sniffer/energy/pv/power_w`           | PV-Leistung in W (sofern `PV_IP` gesetzt)     |
+| `sma-sniffer/energy/pv/energy_total_kwh`  | PV-Gesamtertrag in kWh (für Energie-Dashboard) |
+| `sma-sniffer/energy/pv/energy_today_kwh`  | PV-Tagesertrag in kWh                          |
+| `sma-sniffer/energy/battery/power_w`      | Batterieleistung in W (sofern `BATTERY_IP`)   |
+| `sma-sniffer/energy/battery/soc_pct`      | Batterie-Ladezustand in % (Sunny Island)      |
+| `sma-sniffer/energy/battery/energy_in_kwh`  | In den Speicher geladene Energie in kWh     |
+| `sma-sniffer/energy/battery/energy_out_kwh` | Aus dem Speicher entladene Energie in kWh   |
+
+Die `*_kwh`-Topics sind kumulative Zähler (`device_class: energy`,
+`state_class: total_increasing`) und damit direkt im **Home Assistant
+Energie-Dashboard** verwendbar (Solarproduktion bzw. Batteriespeicher).
 
 ### Home Assistant
 
