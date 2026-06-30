@@ -10,6 +10,15 @@ Island Batterie-Wechselrichter) **aktiv abgefragt**: Sie senden ihre Leistung
 nicht per Broadcast, sondern werden über das SMA-Speedwire-**Data2+**-Protokoll
 direkt per IP angefragt (Login + Register-Abfrage, wie SBFspot).
 
+> 📖 **Vollständige Dokumentation:** siehe [`docs/`](docs/README.md) —
+> [Architektur](docs/architecture.md) ·
+> [Konfiguration](docs/configuration.md) ·
+> [Protokolle](docs/protocol.md) ·
+> [Home Assistant](docs/home-assistant.md) ·
+> [CLI-Tools](docs/cli-tools.md) ·
+> [Fehlerbehebung](docs/troubleshooting.md) ·
+> [Entwicklung](docs/development.md)
+
 ## Funktionsweise
 
 **Grid-Zähler (passiv):**
@@ -89,20 +98,33 @@ Der Grid-Zähler funktioniert ohne weitere Konfiguration. PV und Batterie werden
 
 ## Starten
 
+### Schnellstart per Makefile (empfohlen)
+
 ```bash
-docker compose up -d --build
+make install
 ```
 
-Logs ansehen:
+`make install` prüft die Voraussetzungen (docker, docker compose, python3), legt
+die `.env` aus der Vorlage an, sucht die SMA-Geräte im Netzwerk (zeigt ihre
+echten IPs), öffnet die `.env` zum Eintragen der Werte und baut/startet
+anschließend den Container.
+
+Weitere Targets (`make help` zeigt alle):
+
+| Befehl                          | Beschreibung                                    |
+| ------------------------------- | ----------------------------------------------- |
+| `make discover`                 | SMA-Geräte im Netzwerk finden (echte LAN-IPs)   |
+| `make test-inverter IP=…`       | Wechselrichter direkt abfragen (Login + Werte)  |
+| `make up` / `make down`         | Container starten / stoppen                     |
+| `make logs`                     | Live-Logs anzeigen                              |
+| `make restart` / `make ps`      | Neustart / Status                               |
+
+### Manuell per Docker Compose
 
 ```bash
-docker compose logs -f sma-decoder
-```
-
-Stoppen:
-
-```bash
-docker compose down
+docker compose up -d --build      # starten
+docker compose logs -f sma-decoder # Logs
+docker compose down                # stoppen
 ```
 
 ## MQTT-Topics
