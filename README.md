@@ -1,5 +1,7 @@
 # sma-sniffer
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-unterst%C3%BCtzen-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/rvalley98)
+
 Passiver Listener für **SMA Speedwire** Multicast-Telegramme. Liest die
 Leistungsdaten des SMA Energy Meter / Sunny Home Manager (Netzanschlusspunkt)
 mit, dekodiert sie über OBIS und veröffentlicht sie per **MQTT** – inklusive
@@ -183,3 +185,7 @@ python app/main.py
 ```
 
 Es wird eine `.env` im Arbeitsverzeichnis benötigt.
+
+## Unterstützen
+
+Wenn dir der sma-sniffer hilft, freue ich mich über einen Kaffee: https://buymeacoffee.com/rvalley98
