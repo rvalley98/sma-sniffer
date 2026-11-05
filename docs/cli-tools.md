@@ -8,25 +8,32 @@ sich direkt auf dem Host ausführen — unabhängig vom Container.
 ## `discover_speedwire.py` — Geräte finden
 
 Sendet die SMA-Multicast-Discovery und listet alle antwortenden Geräte mit ihrer
-**echten LAN-IP** auf (aus der Absenderadresse der Antwort).
+**echten LAN-IP** und ihrem Typ auf (die IP stammt aus der Absenderadresse der
+Antwort).
 
 ```bash
-python3 app/discover_speedwire.py      # oder: make discover
+python3 app/discover_speedwire.py [passwort] [user|installer]
+# oder: make discover [PW=0000] [GROUP=user]
 ```
 
 Beispielausgabe:
 
 ```
-Sending Speedwire discovery to 239.12.255.254:9522 ...
-
+Searching for SMA devices on the network ...
 Found 3 SMA device(s):
-  192.168.178.37
-  192.168.178.79
-  192.168.178.82   susy=270 serial=1900255994
+  192.168.178.37  PV inverter  serial=305075972  -> pv_ip / PV_IP
+  192.168.178.79  battery inverter  serial=1261042460  -> battery_ip / BATTERY_IP
+  192.168.178.82  energy meter  serial=1900255994  (no IP setting needed)
 ```
 
-Der Energy Meter liefert SUSY/Serial direkt mit; Wechselrichter erscheinen ohne
-(ihre Identität holt man per `speedwire_data2.py`, siehe unten).
+Der Energy Meter liefert seine Seriennummer direkt mit. An den Wechselrichtern
+meldet sich das Tool einmal an und liest den SoC: Liefert ein Gerät einen Wert, gilt
+es als Batterie-Wechselrichter, sonst als PV-Wechselrichter. Schlägt die Anmeldung
+fehl, erscheint `type unknown` mit dem Grund.
+
+Dieselbe Suche läuft beim Start des Sniffers automatisch, solange `PV_IP` oder
+`BATTERY_IP` fehlt, also auch in der Home Assistant App. Das Ergebnis steht dann im
+Log, die Konfiguration bleibt unverändert.
 
 Findet das Tool nur den Zähler, aber keine Wechselrichter, hängen diese nicht im
 selben Netzsegment wie der Host — siehe [troubleshooting.md](troubleshooting.md).

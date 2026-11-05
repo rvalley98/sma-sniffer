@@ -1,5 +1,5 @@
 name: SMA Sniffer
-version: "1.0.0"
+version: "1.1.0"
 slug: sma_sniffer
 description: Liest SMA Energy Meter, Sunny Tripower und Sunny Island per Speedwire aus und stellt die Werte per MQTT bereit.
 url: https://github.com/rvalley98/sma-sniffer

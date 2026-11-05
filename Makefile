@@ -42,8 +42,8 @@ env: ## .env aus .env.example anlegen (falls nicht vorhanden)
 	@if [ ! -f .env ]; then cp .env.example .env && echo "✓ .env erstellt — bitte Werte eintragen"; \
 		else echo "• .env existiert bereits"; fi
 
-discover: ## SMA-Geräte im Netzwerk finden (echte LAN-IPs)
-	@$(PYTHON) app/discover_speedwire.py
+discover: ## SMA-Geräte mit LAN-IP und Typ finden:  make discover [PW=0000] [GROUP=user]
+	@$(PYTHON) app/discover_speedwire.py $(or $(PW),0000) $(or $(GROUP),user)
 
 build: ## Container-Image bauen
 	$(COMPOSE) build

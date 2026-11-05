@@ -9,15 +9,29 @@ Sensoren erscheinen automatisch unter dem Gerät **SMA Sniffer Energy System**.
 1. Die **Mosquitto**-App und die **MQTT**-Integration in Home Assistant
    einrichten. Die Zugangsdaten holt sich der SMA Sniffer dann selbst.
    Einen externen Broker trägst du stattdessen unter `mqtt_host` ein.
-2. Unter **Konfiguration** die LAN-IPs der Wechselrichter eintragen (`pv_ip`,
-   `battery_ip`). Der Grid-Zähler wird ohne Konfiguration erkannt.
-3. Die App starten. Nach etwa 10 Sekunden sind die Sensoren verfügbar.
+2. Die App starten und im **Log** nachsehen. Solange eine Wechselrichter-IP fehlt,
+   sucht die App beim Start nach SMA-Geräten und listet sie auf:
+
+   ```text
+   Found 3 SMA device(s):
+     192.168.178.37  PV inverter  serial=305075972  -> pv_ip / PV_IP
+     192.168.178.79  battery inverter  serial=1261042460  -> battery_ip / BATTERY_IP
+     192.168.178.82  energy meter  serial=1900255994  (no IP setting needed)
+   ```
+
+3. Die IPs unter **Konfiguration** eintragen (`pv_ip`, `battery_ip`) und die App
+   neu starten. Der Grid-Zähler funktioniert ohne Konfiguration. Nach etwa
+   10 Sekunden sind die Sensoren verfügbar.
+
+Reserviere die IPs am besten im Router, damit sie sich nicht ändern.
+
+Für die Typ-Erkennung meldet sich die App einmal mit dem konfigurierten Passwort an
+den Wechselrichtern an. Wird das abgelehnt, steht dort `type unknown`. Dann das
+richtige `inverter_password` setzen und die App neu starten.
 
 > **Wichtig:** Die im Sunny Portal unter „Geräteeigenschaften“ angezeigte
 > `192.168.0.x`-Adresse ist meist die interne WLAN-Adresse der Geräte und im LAN
-> nicht erreichbar. Die richtige IP findest du im Router oder mit
-> `make discover` auf einem Rechner im selben Netz. Reserviere sie am besten im
-> Router, damit sie sich nicht ändert.
+> nicht erreichbar. Nimm die IP aus dem Log.
 
 ## Optionen
 
@@ -45,7 +59,11 @@ Sensoren erscheinen automatisch unter dem Gerät **SMA Sniffer Energy System**.
 - **Keine Grid-Werte:** Für einen Test `log_values` einschalten. Erscheinen keine
   `[GRID]`-Zeilen, kommen die Multicast-Pakete nicht an, etwa weil der Host in
   einem anderen Netz oder VLAN als der Zähler hängt.
-- **`[PV] poll failed` oder `[BATTERY] poll failed`:** IP und Passwort prüfen.
+- **`No SMA devices answered`:** Der Host erreicht die Geräte nicht per Multicast,
+  etwa weil er in einem anderen Netz oder VLAN hängt.
+- **`[PV] poll failed` oder `[BATTERY] poll failed`:** IP und Passwort prüfen. Hat
+  sich die IP geändert, die Option leeren und die App neu starten, dann steht die
+  neue IP im Log.
 - **`MQTT connection refused by broker`:** Zugangsdaten des Brokers prüfen.
 - **`No MQTT broker available`:** Mosquitto-App installieren oder `mqtt_host`
   setzen.

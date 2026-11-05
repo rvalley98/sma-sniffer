@@ -4,6 +4,7 @@ import threading
 import time
 
 import config
+import discover_speedwire
 import speedwire
 from mqtt_publisher import MqttPublisher
 from speedwire_data2 import Data2Client, Data2Error
@@ -88,6 +89,11 @@ def open_socket():
 
 
 def main():
+    # Runs before the listener socket exists: the device replies are unicast to
+    # port 9522 and would otherwise end up at that socket instead of the scan.
+    if config.PV_IP is None or config.BATTERY_IP is None:
+        discover_speedwire.report(config.INVERTER_PASSWORD, config.INVERTER_USER_GROUP)
+
     devices = build_devices()
     inverters = build_inverters()
 
