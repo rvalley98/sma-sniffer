@@ -1,5 +1,24 @@
 # Home Assistant
 
+## Als App installieren
+
+Unter Home Assistant OS läuft der SMA Sniffer als App (früher „Add-on“), ohne
+eigenen Docker-Host und `.env`. Einrichtung und Optionen stehen in
+[DOCS.md](../DOCS.md).
+
+Das Repository wird direkt in Home Assistant eingetragen. Eine Veröffentlichung
+in einem Store ist nicht nötig, und über **HACS** lässt sich die App nicht
+verteilen, weil HACS keine Apps unterstützt.
+
+Topics und `unique_id`s sind in beiden Betriebsarten gleich. Beim Wechsel vom
+Docker-Container zur App bleiben Entitäten und Verlauf also erhalten. Den Container
+vorher stoppen (`make down`), sonst veröffentlichen beide parallel auf denselben
+Topics.
+
+**Neue Version veröffentlichen:** `version` in `config.yaml` erhöhen,
+`CHANGELOG.md` ergänzen und pushen. Home Assistant bietet das Update an, sobald
+sich die Versionsnummer ändert.
+
 ## MQTT-Topics
 
 Basis-Topic: `sma-sniffer/energy`

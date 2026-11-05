@@ -1,5 +1,16 @@
 import json
+import time
+
 import paho.mqtt.client as mqtt
+
+CONNECT_RETRY_SECONDS = 10
+
+
+def _log_connect_result(client, userdata, flags, reason_code, properties):
+    if reason_code.is_failure:
+        print(f"MQTT connection refused by broker: {reason_code}")
+    else:
+        print("MQTT connected")
 
 
 class MqttPublisher:
@@ -12,9 +23,24 @@ class MqttPublisher:
         self.device_id = device_id
 
         self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        self.client.on_connect = _log_connect_result
         self.client.username_pw_set(user, password)
-        self.client.connect(host, port, 60)
+        self._connect(host, port)
         self.client.loop_start()
+
+    def _connect(self, host, port):
+        # A stopped app is not restarted automatically, so wait for the broker
+        # instead of crashing when it isn't up yet.
+        while True:
+            try:
+                self.client.connect(host, port, 60)
+                return
+            except OSError as exc:
+                print(
+                    f"MQTT broker {host}:{port} not reachable ({exc}), "
+                    f"retrying in {CONNECT_RETRY_SECONDS}s"
+                )
+                time.sleep(CONNECT_RETRY_SECONDS)
 
     def publish(self, topic_suffix, value):
         if value is None:

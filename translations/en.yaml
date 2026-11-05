@@ -1,0 +1,43 @@
+configuration:
+  pv_ip:
+    name: Sunny Tripower IP
+    description: LAN IP of the PV inverter. Empty = PV is not polled.
+  battery_ip:
+    name: Sunny Island IP
+    description: LAN IP of the battery inverter. Empty = battery is not polled.
+  inverter_password:
+    name: Inverter password
+    description: Login password of the inverters (SMA default for "user" is 0000).
+  inverter_user_group:
+    name: User group
+    description: User group for the inverter login.
+  poll_interval:
+    name: Poll interval
+    description: Time between inverter queries in seconds.
+  mqtt_host:
+    name: MQTT host
+    description: Only for an external broker. Empty = the Mosquitto app is used automatically.
+  mqtt_port:
+    name: MQTT port
+    description: Port of the external broker (default 1883).
+  mqtt_user:
+    name: MQTT user
+    description: Username for the external broker.
+  mqtt_pass:
+    name: MQTT password
+    description: Password for the external broker.
+  meter_serial:
+    name: Energy Meter serial
+    description: Only needed with several meters on the network. Empty = auto-detect.
+  pv_serial:
+    name: Sunny Tripower serial
+    description: Optional. Logs a warning if a different device answers on the IP.
+  battery_serial:
+    name: Sunny Island serial
+    description: Optional. Logs a warning if a different device answers on the IP.
+  log_values:
+    name: Log values
+    description: Writes every measurement to the log (several lines per second). Enable for troubleshooting only.
+  debug_obis:
+    name: Debug output
+    description: Logs all OBIS channels and the raw Data2+ bytes.

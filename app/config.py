@@ -1,5 +1,7 @@
 import os
 
+import ha_app
+
 # Load a local .env for development. In the container the variables are provided
 # by Docker Compose (env_file), so python-dotenv is optional there.
 try:
@@ -9,13 +11,16 @@ try:
 except ModuleNotFoundError:
     pass
 
+# As a Home Assistant app the values come from the Supervisor instead.
+ha_app.load_into_env()
+
 
 def _require(name: str) -> str:
     value = os.getenv(name)
     if not value:
         raise RuntimeError(
-            f"Missing required environment variable '{name}'. "
-            "Please provide it via a .env file (see .env.example)."
+            f"Missing required setting '{name}'. Provide it via a .env file "
+            "(see .env.example) or, as a Home Assistant app, via its configuration."
         )
     return value
 
@@ -25,15 +30,19 @@ def _optional_int(name: str):
     return int(value) if value else None
 
 
+def _flag(name: str, default: str = "") -> bool:
+    return os.getenv(name, default).lower() in ("1", "true", "yes", "on")
+
+
 # Speedwire multicast group of SMA devices
 MCAST_GRP = "239.12.255.254"
 MCAST_PORT = 9522
 
-# MQTT broker (required, from .env)
+# MQTT broker. User and password stay empty for brokers without authentication.
 MQTT_HOST = _require("MQTT_HOST")
-MQTT_PORT = int(_require("MQTT_PORT"))
-MQTT_USER = _require("MQTT_USER")
-MQTT_PASS = _require("MQTT_PASS")
+MQTT_PORT = int(os.getenv("MQTT_PORT") or 1883)
+MQTT_USER = os.getenv("MQTT_USER") or None
+MQTT_PASS = os.getenv("MQTT_PASS") or None
 
 BASE_TOPIC = "sma-sniffer/energy"
 
@@ -57,4 +66,8 @@ INVERTER_USER_GROUP = os.getenv("INVERTER_USER_GROUP", "user").strip().lower()
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "10"))
 
 # Debug: dump all decoded OBIS channels once per device serial.
-DEBUG_OBIS = os.getenv("DEBUG_OBIS", "").lower() in ("1", "true", "yes", "on")
+DEBUG_OBIS = _flag("DEBUG_OBIS")
+
+# Log every published value. The meter alone produces several lines per second,
+# which is why the Home Assistant app turns this off by default.
+LOG_VALUES = _flag("LOG_VALUES", "1")

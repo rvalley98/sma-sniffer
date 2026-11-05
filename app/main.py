@@ -67,7 +67,8 @@ def poll_inverters(inverters, mqtt):
 
             for topic_suffix, value in results:
                 mqtt.publish(topic_suffix, value)
-                print(f"[{inv.role.upper()}] {inv.ip} {topic_suffix} = {value}")
+                if config.LOG_VALUES:
+                    print(f"[{inv.role.upper()}] {inv.ip} {topic_suffix} = {value}")
 
         time.sleep(config.POLL_INTERVAL)
 
@@ -145,10 +146,11 @@ def main():
 
         for topic_suffix, value in device.handle(telegram):
             mqtt.publish(topic_suffix, value)
-            print(
-                f"[{device.role.upper()}] serial={telegram.serial} "
-                f"{topic_suffix} = {value}"
-            )
+            if config.LOG_VALUES:
+                print(
+                    f"[{device.role.upper()}] serial={telegram.serial} "
+                    f"{topic_suffix} = {value}"
+                )
 
 
 if __name__ == "__main__":

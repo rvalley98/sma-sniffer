@@ -21,6 +21,21 @@ direkt per IP angefragt (Login + Register-Abfrage, wie SBFspot).
 > [Fehlerbehebung](docs/troubleshooting.md) ·
 > [Entwicklung](docs/development.md)
 
+## Installation in Home Assistant
+
+[![Repository zu Home Assistant hinzufügen](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Frvalley98%2Fsma-sniffer)
+
+Der SMA Sniffer läuft als **Home Assistant App** (früher „Add-on“) auf 64-Bit-Systemen
+(`amd64`, `aarch64`) mit Home Assistant OS:
+
+1. Auf den Button klicken oder unter **Einstellungen → Apps → App installieren →
+   ⋮ → Repositories** die URL `https://github.com/rvalley98/sma-sniffer` eintragen.
+2. **SMA Sniffer** installieren und die Wechselrichter-IPs konfigurieren.
+3. Die App starten.
+
+Details stehen in [DOCS.md](DOCS.md). Ohne Home Assistant OS funktioniert weiterhin
+der Docker-Betrieb, siehe unten.
+
 ## Funktionsweise
 
 **Grid-Zähler (passiv):**
@@ -40,7 +55,7 @@ direkt per IP angefragt (Login + Register-Abfrage, wie SBFspot).
   und – beim Sunny Island – den Ladezustand (`0x00295A00`).
 - Veröffentlicht die Werte per MQTT (eigener Thread parallel zum Listener).
 
-## Voraussetzungen
+## Voraussetzungen (Docker-Betrieb)
 
 - Docker / Docker Compose
 - Der Host muss die Speedwire-Multicast-Pakete empfangen können – deshalb läuft
@@ -61,9 +76,9 @@ Anschließend die Werte eintragen:
 | Variable         | Pflicht | Beschreibung                                                        |
 | ---------------- | ------- | ------------------------------------------------------------------- |
 | `MQTT_HOST`      | ja      | Hostname/IP des MQTT-Brokers                                         |
-| `MQTT_PORT`      | ja      | Port des MQTT-Brokers (z. B. `1883`)                                 |
-| `MQTT_USER`      | ja      | MQTT-Benutzername                                                    |
-| `MQTT_PASS`      | ja      | MQTT-Passwort                                                        |
+| `MQTT_PORT`      | nein    | Port des MQTT-Brokers (Standard `1883`)                              |
+| `MQTT_USER`      | nein    | MQTT-Benutzername (leer = ohne Anmeldung)                            |
+| `MQTT_PASS`      | nein    | MQTT-Passwort                                                        |
 | `METER_SERIAL`   | nein    | Seriennummer des Energy Meters (sonst Auto-Erkennung via SUSY-ID)   |
 | `PV_SERIAL`      | nein    | Seriennummer des Sunny Tripower (nur zur Plausibilitätsprüfung)     |
 | `BATTERY_SERIAL` | nein    | Seriennummer des Sunny Island (nur zur Plausibilitätsprüfung)       |
@@ -72,6 +87,7 @@ Anschließend die Werte eintragen:
 | `INVERTER_PASSWORD` | nein | Login-Passwort der Wechselrichter (SMA-Standard `0000`)            |
 | `INVERTER_USER_GROUP` | nein | Login-Benutzergruppe: `user` oder `installer`                    |
 | `POLL_INTERVAL`  | nein    | Abfrageintervall der Wechselrichter in Sekunden (Standard `10`)     |
+| `LOG_VALUES`     | nein    | Jeden Messwert loggen (Standard `1`, `0` = aus)                     |
 
 > Die `.env` ist über `.gitignore` ausgeschlossen und wird bei `git pull` nicht
 > überschrieben.
@@ -161,7 +177,8 @@ manuelle `configuration.yaml` nötig.
 ```
 app/
 ├── main.py              # Einstiegspunkt: Multicast-Loop (Zähler) + Poller-Thread (Wechselrichter)
-├── config.py            # Konfiguration aus der .env
+├── config.py            # Konfiguration aus der .env bzw. den App-Optionen
+├── ha_app.py            # Home Assistant App: Optionen + MQTT-Daten vom Supervisor
 ├── speedwire.py         # OBIS-Parser + Telegram-Klasse (Energy-Meter-Protokoll 0x6069)
 ├── speedwire_data2.py   # Data2+-Client: Login + Register-Abfrage der Wechselrichter (0x6065)
 ├── mqtt_publisher.py    # MQTT-Publish + Home-Assistant-Discovery
@@ -170,6 +187,10 @@ app/
     ├── energy_meter.py  # EnergyMeter   → grid    (Auto-Erkennung via SUSY-ID)
     ├── sunny_tripower.py# SunnyTripower → pv      (gepollt via PV_IP)
     └── sunny_island.py  # SunnyIsland   → battery (gepollt via BATTERY_IP)
+config.yaml              # Home Assistant App: Metadaten und Optionen
+repository.yaml          # Home Assistant App-Repository
+DOCS.md                  # Doku-Tab der App in Home Assistant
+translations/            # Beschriftungen des Konfigurationsformulars
 ```
 
 - Ein neues **Multicast-Gerät** ergänzt man über eine Datei in `devices/`

@@ -37,7 +37,8 @@ tun das **nicht** und müssen aktiv per IP abgefragt werden (Login + Register).
 | Datei                       | Aufgabe                                                           |
 | --------------------------- | ---------------------------------------------------------------- |
 | `app/main.py`               | Einstiegspunkt: Multicast-Socket-Loop + Poller-Thread + Dispatch |
-| `app/config.py`             | Konfiguration aus der `.env`                                     |
+| `app/config.py`             | Konfiguration aus der `.env` bzw. den App-Optionen               |
+| `app/ha_app.py`             | Home Assistant App: Optionen + MQTT-Daten vom Supervisor         |
 | `app/speedwire.py`          | Parser für Energy-Meter-Telegramme (OBIS, Protokoll `0x6069`)    |
 | `app/speedwire_data2.py`    | Client für das Wechselrichter-Protokoll (Data2+, `0x6065`)       |
 | `app/discover_speedwire.py` | Standalone-Scanner: findet alle SMA-Geräte im Netz               |

@@ -1,0 +1,37 @@
+name: SMA Sniffer
+version: "1.0.0"
+slug: sma_sniffer
+description: Liest SMA Energy Meter, Sunny Tripower und Sunny Island per Speedwire aus und stellt die Werte per MQTT bereit.
+url: https://github.com/rvalley98/sma-sniffer
+arch:
+  - aarch64
+  - amd64
+startup: application
+boot: auto
+# Speedwire multicast (239.12.255.254:9522) only reaches the host network.
+host_network: true
+# "want" instead of "need": an external broker configured below works without
+# the Mosquitto app being installed.
+services:
+  - mqtt:want
+options:
+  inverter_password: "0000"
+  inverter_user_group: user
+  poll_interval: 10
+  log_values: false
+  debug_obis: false
+schema:
+  pv_ip: str?
+  battery_ip: str?
+  inverter_password: password
+  inverter_user_group: list(user|installer)
+  poll_interval: int(1,3600)
+  mqtt_host: str?
+  mqtt_port: port?
+  mqtt_user: str?
+  mqtt_pass: password?
+  meter_serial: int?
+  pv_serial: int?
+  battery_serial: int?
+  log_values: bool
+  debug_obis: bool

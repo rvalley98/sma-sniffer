@@ -1,7 +1,11 @@
 # Konfiguration
 
-Die gesamte Konfiguration erfolgt über eine `.env` im Projektverzeichnis.
-Vorlage ist `.env.example`:
+> Als Home Assistant App wird der SMA Sniffer stattdessen im Konfigurations-Tab der
+> App eingerichtet, siehe [DOCS.md](../DOCS.md). Die Optionen heißen wie die
+> Variablen unten, nur kleingeschrieben.
+
+Im Docker-Betrieb erfolgt die gesamte Konfiguration über eine `.env` im
+Projektverzeichnis. Vorlage ist `.env.example`:
 
 ```bash
 cp .env.example .env     # oder: make env
@@ -15,9 +19,9 @@ Die `.env` ist über `.gitignore` ausgeschlossen und wird bei `git pull` nicht
 | Variable               | Pflicht | Standard | Beschreibung                                                            |
 | ---------------------- | ------- | -------- | ---------------------------------------------------------------------- |
 | `MQTT_HOST`            | ja      | –        | Hostname/IP des MQTT-Brokers                                            |
-| `MQTT_PORT`            | ja      | –        | Port des MQTT-Brokers (z. B. `1883`)                                    |
-| `MQTT_USER`            | ja      | –        | MQTT-Benutzername                                                       |
-| `MQTT_PASS`            | ja      | –        | MQTT-Passwort                                                           |
+| `MQTT_PORT`            | nein    | `1883`   | Port des MQTT-Brokers                                                   |
+| `MQTT_USER`            | nein    | leer     | MQTT-Benutzername; leer = ohne Anmeldung                                |
+| `MQTT_PASS`            | nein    | leer     | MQTT-Passwort                                                           |
 | `METER_SERIAL`         | nein    | leer     | Seriennummer des Energy Meters; leer = Auto-Erkennung via SUSY-ID      |
 | `PV_SERIAL`            | nein    | leer     | Seriennummer Sunny Tripower (nur Plausibilitätsprüfung)                |
 | `BATTERY_SERIAL`       | nein    | leer     | Seriennummer Sunny Island (nur Plausibilitätsprüfung)                  |
@@ -26,6 +30,7 @@ Die `.env` ist über `.gitignore` ausgeschlossen und wird bei `git pull` nicht
 | `INVERTER_PASSWORD`    | nein    | `0000`   | Login-Passwort der Wechselrichter                                      |
 | `INVERTER_USER_GROUP`  | nein    | `user`   | Login-Benutzergruppe: `user` oder `installer`                          |
 | `POLL_INTERVAL`        | nein    | `10`     | Abfrageintervall der Wechselrichter in Sekunden                        |
+| `LOG_VALUES`           | nein    | `1`      | Jeden Messwert loggen; `0` = aus (in der HA-App standardmäßig aus)     |
 | `DEBUG_OBIS`           | nein    | leer     | `1` = alle OBIS-Kanäle dumpen **und** Data2+-Rohbytes loggen           |
 
 ## Grid-Zähler

@@ -1,0 +1,43 @@
+configuration:
+  pv_ip:
+    name: IP des Sunny Tripower
+    description: LAN-IP des PV-Wechselrichters. Leer = PV wird nicht abgefragt.
+  battery_ip:
+    name: IP des Sunny Island
+    description: LAN-IP des Batterie-Wechselrichters. Leer = Batterie wird nicht abgefragt.
+  inverter_password:
+    name: Wechselrichter-Passwort
+    description: Login-Passwort der Wechselrichter (SMA-Standard für "user" ist 0000).
+  inverter_user_group:
+    name: Benutzergruppe
+    description: Benutzergruppe für den Wechselrichter-Login.
+  poll_interval:
+    name: Abfrageintervall
+    description: Abstand der Wechselrichter-Abfragen in Sekunden.
+  mqtt_host:
+    name: MQTT-Host
+    description: Nur für einen externen Broker. Leer = Mosquitto-App wird automatisch verwendet.
+  mqtt_port:
+    name: MQTT-Port
+    description: Port des externen Brokers (Standard 1883).
+  mqtt_user:
+    name: MQTT-Benutzer
+    description: Benutzername des externen Brokers.
+  mqtt_pass:
+    name: MQTT-Passwort
+    description: Passwort des externen Brokers.
+  meter_serial:
+    name: Seriennummer Energy Meter
+    description: Nur nötig, wenn mehrere Zähler im Netz sind. Leer = automatische Erkennung.
+  pv_serial:
+    name: Seriennummer Sunny Tripower
+    description: Optional. Warnt im Log, wenn unter der IP ein anderes Gerät antwortet.
+  battery_serial:
+    name: Seriennummer Sunny Island
+    description: Optional. Warnt im Log, wenn unter der IP ein anderes Gerät antwortet.
+  log_values:
+    name: Messwerte loggen
+    description: Schreibt jeden Messwert ins Log (mehrere Zeilen pro Sekunde). Nur zur Fehlersuche einschalten.
+  debug_obis:
+    name: Debug-Ausgabe
+    description: Protokolliert alle OBIS-Kanäle und die Data2+-Rohbytes.
